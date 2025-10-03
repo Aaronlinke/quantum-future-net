@@ -36,11 +36,31 @@ const SecuritySection = () => {
             </div>
             
             <div className="glass rounded-2xl p-8 border-accent/30">
-              <h4 className="text-2xl font-semibold mb-6">Entwicklungsfortschritt: Sicherheitsprotokolle</h4>
-              <Progress value={35} className="h-6 mb-4" />
-              <p className="text-muted-foreground">
-                35% der neuen Sicherheitsstandards sind bereits implementiert
-              </p>
+              <h4 className="text-2xl font-semibold mb-6">Entwicklungsfortschritt</h4>
+              <div className="space-y-6">
+                {[
+                  { label: "Quantenkryptographie", value: 72, color: "hsl(192 100% 42%)" },
+                  { label: "Zero-Knowledge-Proofs", value: 58, color: "hsl(270 65% 60%)" },
+                  { label: "Post-Quanten-Algorithmen", value: 35, color: "hsl(32 100% 50%)" },
+                ].map((item, idx) => (
+                  <div key={idx}>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="font-medium">{item.label}</span>
+                      <span className="text-accent font-bold">{item.value}%</span>
+                    </div>
+                    <div className="h-3 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-1000 ease-out"
+                        style={{
+                          width: `${item.value}%`,
+                          background: `linear-gradient(90deg, ${item.color}, hsl(270 65% 60%))`,
+                          animation: `progress-fill 2s ease-out ${idx * 0.3}s forwards`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

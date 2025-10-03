@@ -1,7 +1,32 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useState, useEffect, useRef } from "react";
 
 const Timeline = () => {
+  const [visiblePhases, setVisiblePhases] = useState<number[]>([]);
+  const phaseRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    const observers = phaseRefs.current.map((ref, index) => {
+      if (!ref) return null;
+      
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setVisiblePhases((prev) => [...new Set([...prev, index])]);
+          }
+        },
+        { threshold: 0.2 }
+      );
+      
+      observer.observe(ref);
+      return observer;
+    });
+
+    return () => {
+      observers.forEach((observer) => observer?.disconnect());
+    };
+  }, []);
   const phases = [
     {
       date: "2023-2025",
@@ -28,9 +53,15 @@ const Timeline = () => {
         {phases.map((phase, index) => (
           <div
             key={index}
-            className={`relative grid md:grid-cols-2 gap-8 items-center ${
+            ref={(el) => (phaseRefs.current[index] = el)}
+            className={`relative grid md:grid-cols-2 gap-8 items-center transition-all duration-700 ${
               index % 2 === 0 ? "" : "md:text-right"
+            } ${
+              visiblePhases.includes(index)
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-10"
             }`}
+            style={{ transitionDelay: `${index * 150}ms` }}
           >
             <div className={index % 2 === 0 ? "" : "md:order-2"}>
               <div className="glass rounded-2xl p-6 border-secondary/30 transition-all duration-500 hover:translate-x-2 hover:shadow-[0_10px_30px_hsl(var(--secondary)/0.3)]">

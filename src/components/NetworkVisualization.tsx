@@ -1,68 +1,89 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const NetworkVisualization = () => {
-  const canvasRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [nodeCount, setNodeCount] = useState(0);
 
   useEffect(() => {
-    if (!canvasRef.current) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    const container = canvasRef.current;
-    const nodes: { x: number; y: number; size: number; color: string; vx: number; vy: number }[] = [];
-    
-    // Create nodes
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    const nodes: { x: number; y: number; vx: number; vy: number; radius: number; color: string }[] = [];
     const colors = ["hsl(192 100% 42%)", "hsl(270 65% 60%)", "hsl(82 61% 45%)", "hsl(32 100% 50%)"];
-    for (let i = 0; i < 15; i++) {
+
+    for (let i = 0; i < 20; i++) {
       nodes.push({
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        size: 30 + Math.random() * 20,
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 2,
+        vy: (Math.random() - 0.5) * 2,
+        radius: 4 + Math.random() * 8,
         color: colors[Math.floor(Math.random() * colors.length)],
-        vx: (Math.random() - 0.5) * 0.1,
-        vy: (Math.random() - 0.5) * 0.1,
       });
     }
 
-    const nodeElements = nodes.map((node, i) => {
-      const el = document.createElement("div");
-      el.className = "absolute rounded-full flex items-center justify-center text-white font-bold cursor-pointer transition-all duration-300 hover:scale-125 animate-pulse-glow";
-      el.style.width = `${node.size}px`;
-      el.style.height = `${node.size}px`;
-      el.style.left = `${node.x}%`;
-      el.style.top = `${node.y}%`;
-      el.style.backgroundColor = node.color;
-      el.style.boxShadow = `0 0 20px ${node.color}`;
-      el.style.animationDelay = `${i * 0.2}s`;
-      el.textContent = String(i + 1);
-      container.appendChild(el);
-      return { el, node };
-    });
+    setNodeCount(nodes.length);
 
-    // Animate
     let animationFrame: number;
     const animate = () => {
-      nodeElements.forEach(({ el, node }) => {
+      ctx.fillStyle = "rgba(13, 13, 26, 0.1)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      nodes.forEach((node, i) => {
         node.x += node.vx;
         node.y += node.vy;
-        
-        if (node.x < 0 || node.x > 95) node.vx *= -1;
-        if (node.y < 0 || node.y > 95) node.vy *= -1;
-        
-        el.style.left = `${node.x}%`;
-        el.style.top = `${node.y}%`;
+
+        if (node.x < 0 || node.x > canvas.width) node.vx *= -1;
+        if (node.y < 0 || node.y > canvas.height) node.vy *= -1;
+
+        // Draw connections
+        nodes.forEach((other, j) => {
+          if (i < j) {
+            const dx = other.x - node.x;
+            const dy = other.y - node.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < 150) {
+              ctx.strokeStyle = `hsla(192, 100%, 42%, ${0.3 * (1 - distance / 150)})`;
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(node.x, node.y);
+              ctx.lineTo(other.x, other.y);
+              ctx.stroke();
+            }
+          }
+        });
+
+        // Draw node
+        ctx.fillStyle = node.color;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = node.color;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
       });
+
       animationFrame = requestAnimationFrame(animate);
     };
+
     animate();
 
-    return () => {
-      cancelAnimationFrame(animationFrame);
-      nodeElements.forEach(({ el }) => el.remove());
-    };
+    return () => cancelAnimationFrame(animationFrame);
   }, []);
 
   return (
     <div className="relative w-full h-[400px] glass rounded-2xl overflow-hidden">
-      <div ref={canvasRef} className="absolute inset-0" />
+      <canvas ref={canvasRef} className="w-full h-full" />
+      <div className="absolute top-4 right-4 text-xs text-muted-foreground bg-background/50 px-3 py-1.5 rounded-full backdrop-blur">
+        {nodeCount} Knoten aktiv
+      </div>
     </div>
   );
 };
