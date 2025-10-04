@@ -1,6 +1,5 @@
 import { ShieldCheck, Lock, EyeOff, Shield } from "lucide-react";
 import FeatureCard from "./FeatureCard";
-import { Progress } from "@/components/ui/progress";
 
 const SecuritySection = () => {
   return (

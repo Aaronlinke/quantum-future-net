@@ -1,15 +1,14 @@
 import { Bot, X, Send } from "lucide-react";
 import { useState } from "react";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
 }
 
-const AIChat = () => {
+const AIChatWindow = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -100,4 +99,4 @@ const AIChat = () => {
   );
 };
 
-export default AIChat;
+export default AIChatWindow;

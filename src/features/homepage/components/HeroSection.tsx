@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Compass, Save } from "lucide-react";
 import { toast } from "sonner";
 
-const Hero = () => {
+const HeroSection = () => {
   const handleSave = () => {
     toast.success("Vision gespeichert!");
   };
@@ -51,4 +51,4 @@ const Hero = () => {
   );
 };
 
-export default Hero;
+export default HeroSection;
