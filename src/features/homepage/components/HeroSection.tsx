@@ -19,12 +19,15 @@ const HeroSection = () => {
       </div>
       
       <div className="container mx-auto max-w-4xl text-center relative z-10">
-        <h2 className="text-5xl md:text-6xl font-bold mb-6 animate-fade-in">
-          Die Revolution beginnt jetzt
-        </h2>
-        <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-          Entdecken Sie, wie das Internet der Zukunft aussehen könnte - dezentral, sicher und nachhaltig. 
-          Diese Vision basiert auf aktuellen Forschungsergebnissen und technologischen Entwicklungen.
+        <div className="inline-block px-4 py-2 bg-primary/20 rounded-full mb-6 animate-fade-in">
+          <span className="text-sm font-semibold text-primary">Web 4.0 – Die nächste Dimension</span>
+        </div>
+        <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in">
+          Das Internet neu denken
+        </h1>
+        <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
+          Eine fundamentale Neukonzeption: autonom, intuitiv, dezentral und ethisch. 
+          Web 4.0 überwindet die Grenzen des semantischen Webs und schafft ein intelligent agierendes Ökosystem.
         </p>
         <div className="flex gap-4 justify-center flex-wrap">
           <Button 
