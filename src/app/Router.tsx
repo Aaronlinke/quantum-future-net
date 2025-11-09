@@ -5,6 +5,11 @@ import { Toaster } from '@/components/ui/toaster';
 import App from './App';
 import HomePage from '@/features/homepage/pages/HomePage';
 import NotFound from '@/pages/NotFound';
+import Auth from '@/pages/Auth';
+import Profile from '@/pages/Profile';
+import DataPods from '@/pages/DataPods';
+import Consent from '@/pages/Consent';
+import { AuthProvider } from '@/hooks/useAuth';
 
 const queryClient = new QueryClient();
 
@@ -18,6 +23,22 @@ const router = createBrowserRouter([
         index: true,
         element: <HomePage />,
       },
+      {
+        path: 'auth',
+        element: <Auth />,
+      },
+      {
+        path: 'profile',
+        element: <Profile />,
+      },
+      {
+        path: 'data-pods',
+        element: <DataPods />,
+      },
+      {
+        path: 'consent',
+        element: <Consent />,
+      },
     ],
   },
 ]);
@@ -25,10 +46,12 @@ const router = createBrowserRouter([
 export function AppRouter() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <RouterProvider router={router} />
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <RouterProvider router={router} />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
