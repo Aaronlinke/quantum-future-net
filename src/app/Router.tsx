@@ -9,6 +9,8 @@ import Auth from '@/pages/Auth';
 import Profile from '@/pages/Profile';
 import DataPods from '@/pages/DataPods';
 import Consent from '@/pages/Consent';
+import AgentMarketplace from '@/pages/AgentMarketplace';
+import MyAgents from '@/pages/MyAgents';
 import { AuthProvider } from '@/hooks/useAuth';
 
 const queryClient = new QueryClient();
@@ -38,6 +40,14 @@ const router = createBrowserRouter([
       {
         path: 'consent',
         element: <Consent />,
+      },
+      {
+        path: 'agent-marketplace',
+        element: <AgentMarketplace />,
+      },
+      {
+        path: 'my-agents',
+        element: <MyAgents />,
       },
     ],
   },

@@ -14,6 +14,89 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_interactions: {
+        Row: {
+          agent_id: string
+          created_at: string | null
+          id: string
+          input_data: Json
+          output_data: Json | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string | null
+          id?: string
+          input_data: Json
+          output_data?: Json | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string | null
+          id?: string
+          input_data?: Json
+          output_data?: Json | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_interactions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agents: {
+        Row: {
+          capabilities: Json
+          category: string
+          created_at: string | null
+          description: string
+          icon: string | null
+          id: string
+          install_count: number
+          is_active: boolean
+          name: string
+          rating: number | null
+          updated_at: string | null
+          version: string
+        }
+        Insert: {
+          capabilities?: Json
+          category: string
+          created_at?: string | null
+          description: string
+          icon?: string | null
+          id?: string
+          install_count?: number
+          is_active?: boolean
+          name: string
+          rating?: number | null
+          updated_at?: string | null
+          version?: string
+        }
+        Update: {
+          capabilities?: Json
+          category?: string
+          created_at?: string | null
+          description?: string
+          icon?: string | null
+          id?: string
+          install_count?: number
+          is_active?: boolean
+          name?: string
+          rating?: number | null
+          updated_at?: string | null
+          version?: string
+        }
+        Relationships: []
+      }
       consent_logs: {
         Row: {
           action: string
@@ -115,6 +198,44 @@ export type Database = {
           verification_method?: Json | null
         }
         Relationships: []
+      }
+      user_agents: {
+        Row: {
+          agent_id: string
+          id: string
+          installed_at: string | null
+          is_enabled: boolean
+          last_used_at: string | null
+          settings: Json | null
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          id?: string
+          installed_at?: string | null
+          is_enabled?: boolean
+          last_used_at?: string | null
+          settings?: Json | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          id?: string
+          installed_at?: string | null
+          is_enabled?: boolean
+          last_used_at?: string | null
+          settings?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_agents_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

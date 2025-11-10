@@ -29,6 +29,11 @@ const Header = () => {
           <a href="/#roadmap" className="text-sm font-medium hover:text-primary transition-colors">
             Roadmap
           </a>
+          {user && (
+            <Link to="/agent-marketplace" className="text-sm font-medium hover:text-primary transition-colors">
+              Agenten
+            </Link>
+          )}
           {user ? (
             <Link to="/profile">
               <Button variant="outline" className="gap-2">
@@ -86,6 +91,15 @@ const Header = () => {
             >
               Roadmap
             </a>
+            {user && (
+              <Link
+                to="/agent-marketplace"
+                className="text-sm font-medium hover:text-primary transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Agenten
+              </Link>
+            )}
             {user ? (
               <Link to="/profile" onClick={() => setIsMenuOpen(false)}>
                 <Button variant="outline" className="w-full gap-2">
