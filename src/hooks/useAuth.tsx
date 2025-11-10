@@ -1,7 +1,6 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 interface AuthContextType {
@@ -22,7 +21,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -101,7 +99,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     toast.success('Welcome back!');
-    navigate('/');
     return { error: null };
   };
 
@@ -111,7 +108,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       toast.error(error.message);
     } else {
       toast.success('Signed out successfully');
-      navigate('/auth');
     }
   };
 

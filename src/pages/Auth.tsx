@@ -37,8 +37,11 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    await signIn(signInData.email, signInData.password);
+    const { error } = await signIn(signInData.email, signInData.password);
     setIsLoading(false);
+    if (!error) {
+      navigate('/');
+    }
   };
 
   if (loading) {
