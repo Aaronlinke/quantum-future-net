@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,11 +8,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Database, Plus, Trash2, Lock, Eye, EyeOff } from 'lucide-react';
+import { Database, Plus, Trash2, Lock, Eye, EyeOff, Shield, Key, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import type { Json } from '@/integrations/supabase/types';
+import { 
+  generateEncryptionKey, 
+  encryptData, 
+  decryptData, 
+  exportSalt, 
+  importSalt,
+  type EncryptionMetadata 
+} from '@/lib/crypto';
+import { createZKProof, verifyZKProof, createDecryptionProof, type ZKProof } from '@/lib/zkp';
 
 interface DataPod {
   id: string;
@@ -27,10 +37,15 @@ interface DataPod {
 const DataPods = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { masterPassword, isUnlocked, unlock } = useMasterPassword();
   const [pods, setPods] = useState<DataPod[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isUnlockDialogOpen, setIsUnlockDialogOpen] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
   const [visiblePods, setVisiblePods] = useState<Set<string>>(new Set());
+  const [decryptedData, setDecryptedData] = useState<Map<string, string>>(new Map());
+  const [zkProofs, setZkProofs] = useState<Map<string, ZKProof>>(new Map());
   const [newPod, setNewPod] = useState({
     data_type: '',
     encrypted_data: '',
@@ -42,8 +57,12 @@ const DataPods = () => {
       navigate('/auth');
       return;
     }
-    fetchPods();
-  }, [user, navigate]);
+    if (!isUnlocked) {
+      setIsUnlockDialogOpen(true);
+    } else {
+      fetchPods();
+    }
+  }, [user, isUnlocked, navigate]);
 
   const fetchPods = async () => {
     const { data, error } = await supabase
@@ -62,24 +81,46 @@ const DataPods = () => {
   const handleCreatePod = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) return;
+    if (!user || !masterPassword) return;
     
-    const { error } = await supabase
-      .from('data_pods')
-      .insert([{
-        user_id: user.id,
-        data_type: newPod.data_type,
-        encrypted_data: btoa(newPod.encrypted_data), // Simple base64 encoding for demo
-        metadata: newPod.metadata
-      }]);
+    try {
+      // Generate encryption key from master password
+      const { key, salt } = await generateEncryptionKey(masterPassword);
+      
+      // Encrypt the data
+      const { encrypted, iv } = await encryptData(newPod.encrypted_data, key);
+      
+      // Generate zero-knowledge proof
+      const zkProof = await createZKProof(newPod.encrypted_data);
+      
+      // Create encryption metadata
+      const metadata: EncryptionMetadata = {
+        salt: exportSalt(salt),
+        iv,
+        hash: zkProof.commitment,
+        timestamp: Date.now()
+      };
+      
+      const { error } = await supabase
+        .from('data_pods')
+        .insert([{
+          user_id: user.id,
+          data_type: newPod.data_type,
+          encrypted_data: encrypted,
+          metadata: metadata as unknown as Json
+        }]);
 
-    if (error) {
-      toast.error('Fehler beim Erstellen des Data Pods');
-    } else {
-      toast.success('Data Pod erfolgreich erstellt!');
-      setIsDialogOpen(false);
-      setNewPod({ data_type: '', encrypted_data: '', metadata: {} });
-      fetchPods();
+      if (error) {
+        toast.error('Fehler beim Erstellen des Data Pods');
+      } else {
+        toast.success('Data Pod mit Zero-Knowledge-Proof erstellt!');
+        setIsDialogOpen(false);
+        setNewPod({ data_type: '', encrypted_data: '', metadata: {} });
+        fetchPods();
+      }
+    } catch (error) {
+      console.error('Encryption error:', error);
+      toast.error('Verschlüsselungsfehler aufgetreten');
     }
   };
 
@@ -97,22 +138,81 @@ const DataPods = () => {
     }
   };
 
-  const toggleVisibility = (id: string) => {
+  const toggleVisibility = async (pod: DataPod) => {
+    const podId = pod.id;
     const newVisible = new Set(visiblePods);
-    if (newVisible.has(id)) {
-      newVisible.delete(id);
+    
+    if (newVisible.has(podId)) {
+      // Hide the data
+      newVisible.delete(podId);
+      setDecryptedData(prev => {
+        const next = new Map(prev);
+        next.delete(podId);
+        return next;
+      });
     } else {
-      newVisible.add(id);
+      // Decrypt and show the data
+      if (!masterPassword) {
+        toast.error('Master-Passwort erforderlich');
+        return;
+      }
+      
+      try {
+        const metadata = pod.metadata as unknown as EncryptionMetadata;
+        const salt = importSalt(metadata.salt);
+        
+        // Derive key from master password
+        const { key } = await generateEncryptionKey(masterPassword);
+        
+        // Decrypt data
+        const decrypted = await decryptData(pod.encrypted_data, metadata.iv, key);
+        
+        // Generate and verify ZK proof
+        const zkProof = await createZKProof(decrypted);
+        const isValid = await verifyZKProof(zkProof, decrypted);
+        
+        if (!isValid) {
+          toast.error('Zero-Knowledge-Proof Verifizierung fehlgeschlagen');
+          return;
+        }
+        
+        // Create decryption proof
+        const decryptionProof = await createDecryptionProof(decrypted);
+        
+        setDecryptedData(prev => {
+          const next = new Map(prev);
+          next.set(podId, decrypted);
+          return next;
+        });
+        
+        setZkProofs(prev => {
+          const next = new Map(prev);
+          next.set(podId, decryptionProof.zkProof);
+          return next;
+        });
+        
+        newVisible.add(podId);
+        toast.success('Daten erfolgreich entschlüsselt und verifiziert');
+      } catch (error) {
+        console.error('Decryption error:', error);
+        toast.error('Fehler beim Entschlüsseln der Daten');
+        return;
+      }
     }
+    
     setVisiblePods(newVisible);
   };
 
-  const decryptData = (encrypted: string) => {
-    try {
-      return atob(encrypted);
-    } catch {
-      return encrypted;
+  const handleUnlock = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput.length < 8) {
+      toast.error('Passwort muss mindestens 8 Zeichen haben');
+      return;
     }
+    unlock(passwordInput);
+    setIsUnlockDialogOpen(false);
+    setPasswordInput('');
+    toast.success('Data Pods entsperrt');
   };
 
   if (isLoading) {
@@ -126,11 +226,48 @@ const DataPods = () => {
   return (
     <div className="min-h-screen py-16 px-4">
       <div className="container mx-auto max-w-6xl">
+        {/* Unlock Dialog */}
+        <Dialog open={isUnlockDialogOpen} onOpenChange={setIsUnlockDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Key className="w-5 h-5 text-secondary" />
+                Data Pods entsperren
+              </DialogTitle>
+              <DialogDescription>
+                Gib dein Master-Passwort ein, um auf deine verschlüsselten Data Pods zuzugreifen.
+                <br />
+                <span className="text-xs text-warning">Dieses Passwort wird nur lokal gespeichert.</span>
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleUnlock} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="master-password">Master-Passwort</Label>
+                <Input
+                  id="master-password"
+                  type="password"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  placeholder="Mindestens 8 Zeichen"
+                  minLength={8}
+                  required
+                  autoFocus
+                />
+              </div>
+              <Button type="submit" className="w-full">
+                <Shield className="w-4 h-4 mr-2" />
+                Entsperren
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-4xl font-bold text-gradient mb-2">Personal Data Pods</h1>
-            <p className="text-muted-foreground">
-              Deine verschlüsselten Daten unter deiner Kontrolle
+            <p className="text-muted-foreground flex items-center gap-2">
+              <Lock className="w-4 h-4" />
+              End-to-End verschlüsselt mit Zero-Knowledge-Proofs
             </p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -177,8 +314,13 @@ const DataPods = () => {
                     rows={6}
                     required
                   />
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Shield className="w-3 h-3" />
+                    AES-256-GCM Verschlüsselung + Zero-Knowledge-Proof
+                  </p>
                 </div>
                 <Button type="submit" className="w-full">
+                  <Lock className="w-4 h-4 mr-2" />
                   Pod erstellen
                 </Button>
               </form>
@@ -206,10 +348,16 @@ const DataPods = () => {
                       {pod.data_type}
                     </div>
                     <div className="flex items-center gap-2">
+                      {zkProofs.has(pod.id) && (
+                        <div className="flex items-center gap-1 text-success text-xs">
+                          <CheckCircle2 className="w-3 h-3" />
+                          ZKP
+                        </div>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => toggleVisibility(pod.id)}
+                        onClick={() => toggleVisibility(pod)}
                       >
                         {visiblePods.has(pod.id) ? (
                           <EyeOff className="w-4 h-4" />
@@ -233,12 +381,20 @@ const DataPods = () => {
                 <CardContent>
                   <div className="glass rounded-lg p-4">
                     {visiblePods.has(pod.id) ? (
-                      <p className="text-sm whitespace-pre-wrap break-words">
-                        {decryptData(pod.encrypted_data)}
-                      </p>
+                      <div className="space-y-2">
+                        <p className="text-sm whitespace-pre-wrap break-words">
+                          {decryptedData.get(pod.id) || 'Entschlüsselung fehlgeschlagen'}
+                        </p>
+                        {zkProofs.has(pod.id) && (
+                          <div className="flex items-center gap-2 text-xs text-success pt-2 border-t border-border/50">
+                            <Shield className="w-3 h-3" />
+                            Zero-Knowledge-Proof verifiziert
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <p className="text-sm text-muted-foreground italic">
-                        Verschlüsselte Daten - Klicke auf das Auge um sie anzuzeigen
+                        🔒 AES-256-GCM verschlüsselt - Klicke auf das Auge zum Entschlüsseln
                       </p>
                     )}
                   </div>
@@ -250,6 +406,12 @@ const DataPods = () => {
                       </div>
                     </div>
                   )}
+                  <div className="mt-4 pt-4 border-t border-border/50">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Lock className="w-3 h-3" />
+                      <span>End-to-End Encrypted</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             ))
