@@ -11,6 +11,7 @@ import DataPods from '@/pages/DataPods';
 import Consent from '@/pages/Consent';
 import AgentMarketplace from '@/pages/AgentMarketplace';
 import MyAgents from '@/pages/MyAgents';
+import KnowledgeGraph from '@/pages/KnowledgeGraph';
 import { AuthProvider } from '@/hooks/useAuth';
 
 const queryClient = new QueryClient();
@@ -48,6 +49,10 @@ const router = createBrowserRouter([
       {
         path: 'my-agents',
         element: <MyAgents />,
+      },
+      {
+        path: 'knowledge-graph',
+        element: <KnowledgeGraph />,
       },
     ],
   },

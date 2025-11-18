@@ -30,9 +30,17 @@ const Header = () => {
             Roadmap
           </a>
           {user && (
-            <Link to="/agent-marketplace" className="text-sm font-medium hover:text-primary transition-colors">
-              Agenten
-            </Link>
+            <>
+              <Link to="/agent-marketplace" className="text-sm font-medium hover:text-primary transition-colors">
+                Agenten
+              </Link>
+              <Link to="/my-agents" className="text-sm font-medium hover:text-primary transition-colors">
+                Meine Agenten
+              </Link>
+              <Link to="/knowledge-graph" className="text-sm font-medium hover:text-primary transition-colors">
+                Knowledge Graph
+              </Link>
+            </>
           )}
           {user ? (
             <Link to="/profile">
@@ -92,13 +100,29 @@ const Header = () => {
               Roadmap
             </a>
             {user && (
-              <Link
-                to="/agent-marketplace"
-                className="text-sm font-medium hover:text-primary transition-colors"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Agenten
-              </Link>
+              <>
+                <Link
+                  to="/agent-marketplace"
+                  className="text-sm font-medium hover:text-primary transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Agenten
+                </Link>
+                <Link
+                  to="/my-agents"
+                  className="text-sm font-medium hover:text-primary transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Meine Agenten
+                </Link>
+                <Link
+                  to="/knowledge-graph"
+                  className="text-sm font-medium hover:text-primary transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Knowledge Graph
+                </Link>
+              </>
             )}
             {user ? (
               <Link to="/profile" onClick={() => setIsMenuOpen(false)}>
