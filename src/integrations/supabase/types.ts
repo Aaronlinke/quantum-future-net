@@ -163,6 +163,84 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_edges: {
+        Row: {
+          created_at: string | null
+          edge_type: string
+          id: string
+          properties: Json | null
+          source_node_id: string
+          target_node_id: string
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          edge_type: string
+          id?: string
+          properties?: Json | null
+          source_node_id: string
+          target_node_id: string
+          user_id: string
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          edge_type?: string
+          id?: string
+          properties?: Json | null
+          source_node_id?: string
+          target_node_id?: string
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_edges_source_node_id_fkey"
+            columns: ["source_node_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_edges_target_node_id_fkey"
+            columns: ["target_node_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_nodes: {
+        Row: {
+          created_at: string | null
+          id: string
+          label: string
+          node_type: string
+          properties: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          label: string
+          node_type: string
+          properties?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          label?: string
+          node_type?: string
+          properties?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -196,6 +274,33 @@ export type Database = {
           public_key?: string | null
           updated_at?: string | null
           verification_method?: Json | null
+        }
+        Relationships: []
+      }
+      semantic_queries: {
+        Row: {
+          created_at: string | null
+          id: string
+          query_text: string
+          query_type: string
+          results: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          query_text: string
+          query_type: string
+          results?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          query_text?: string
+          query_type?: string
+          results?: Json | null
+          user_id?: string
         }
         Relationships: []
       }
