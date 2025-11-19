@@ -2,3 +2,7 @@ project_id = "kdondljxxhkoupheegrp"
 
 [functions.web4-chat]
 verify_jwt = false
+
+[functions.execute-agent]
+verify_jwt = false
+
