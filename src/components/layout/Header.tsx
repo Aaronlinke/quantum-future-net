@@ -40,6 +40,12 @@ const Header = () => {
               <Link to="/knowledge-graph" className="text-sm font-medium hover:text-primary transition-colors">
                 Knowledge Graph
               </Link>
+              <Link to="/agent-history" className="text-sm font-medium hover:text-primary transition-colors">
+                History
+              </Link>
+              <Link to="/consent-dashboard" className="text-sm font-medium hover:text-primary transition-colors">
+                Consent
+              </Link>
             </>
           )}
           {user ? (
@@ -121,6 +127,20 @@ const Header = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Knowledge Graph
+                </Link>
+                <Link
+                  to="/agent-history"
+                  className="text-sm font-medium hover:text-primary transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  History
+                </Link>
+                <Link
+                  to="/consent-dashboard"
+                  className="text-sm font-medium hover:text-primary transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Consent
                 </Link>
               </>
             )}

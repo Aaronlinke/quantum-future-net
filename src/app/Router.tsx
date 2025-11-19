@@ -12,6 +12,9 @@ import Consent from '@/pages/Consent';
 import AgentMarketplace from '@/pages/AgentMarketplace';
 import MyAgents from '@/pages/MyAgents';
 import KnowledgeGraph from '@/pages/KnowledgeGraph';
+import AdminDashboard from '@/pages/AdminDashboard';
+import AgentHistory from '@/pages/AgentHistory';
+import ConsentDashboard from '@/pages/ConsentDashboard';
 import { AuthProvider } from '@/hooks/useAuth';
 
 const queryClient = new QueryClient();
@@ -53,6 +56,18 @@ const router = createBrowserRouter([
       {
         path: 'knowledge-graph',
         element: <KnowledgeGraph />,
+      },
+      {
+        path: 'admin',
+        element: <AdminDashboard />,
+      },
+      {
+        path: 'agent-history',
+        element: <AgentHistory />,
+      },
+      {
+        path: 'consent-dashboard',
+        element: <ConsentDashboard />,
       },
     ],
   },

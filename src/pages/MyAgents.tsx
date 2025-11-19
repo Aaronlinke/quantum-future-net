@@ -2,13 +2,17 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useAgentExecution } from '@/hooks/useAgentExecution';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import * as Icons from 'lucide-react';
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, Play } from 'lucide-react';
 
 interface UserAgent {
   id: string;
@@ -29,8 +33,10 @@ interface UserAgent {
 const MyAgents = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { executeAgent, executing } = useAgentExecution();
   const [userAgents, setUserAgents] = useState<UserAgent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [executionInput, setExecutionInput] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -85,6 +91,23 @@ const MyAgents = () => {
       fetchUserAgents();
     } catch (error: any) {
       toast.error('Fehler: ' + error.message);
+    }
+  };
+
+  const handleExecuteAgent = async (agentId: string) => {
+    if (!user) return;
+
+    const input = executionInput[agentId] || '';
+    if (!input.trim()) {
+      toast.error('Bitte geben Sie Eingabedaten ein');
+      return;
+    }
+
+    try {
+      await executeAgent(agentId, { query: input }, user.id);
+      setExecutionInput(prev => ({ ...prev, [agentId]: '' }));
+    } catch (error) {
+      console.error('Ausführungsfehler:', error);
     }
   };
 
@@ -194,7 +217,41 @@ const MyAgents = () => {
                       </div>
                     </div>
                   </CardContent>
-                  <CardFooter>
+                  <CardFooter className="flex flex-col gap-2">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="default" className="w-full" disabled={!userAgent.is_enabled}>
+                          <Play className="h-4 w-4 mr-2" />
+                          Agent ausführen
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>{userAgent.agents.name} ausführen</DialogTitle>
+                          <DialogDescription>
+                            Geben Sie Eingabedaten ein, die der Agent verarbeiten soll
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="input">Eingabedaten</Label>
+                            <Input
+                              id="input"
+                              placeholder="Eingabe oder Abfrage eingeben..."
+                              value={executionInput[userAgent.agent_id] || ''}
+                              onChange={(e) => setExecutionInput(prev => ({ ...prev, [userAgent.agent_id]: e.target.value }))}
+                            />
+                          </div>
+                          <Button
+                            onClick={() => handleExecuteAgent(userAgent.agent_id)}
+                            disabled={executing}
+                            className="w-full"
+                          >
+                            {executing ? 'Wird ausgeführt...' : 'Agent starten'}
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                     <Button 
                       variant="destructive" 
                       className="w-full"
