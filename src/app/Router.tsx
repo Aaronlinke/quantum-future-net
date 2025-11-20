@@ -15,6 +15,8 @@ import KnowledgeGraph from '@/pages/KnowledgeGraph';
 import AdminDashboard from '@/pages/AdminDashboard';
 import AgentHistory from '@/pages/AgentHistory';
 import ConsentDashboard from '@/pages/ConsentDashboard';
+import MultiAgentDashboard from '@/pages/MultiAgentDashboard';
+import BlockchainDID from '@/pages/BlockchainDID';
 import { AuthProvider } from '@/hooks/useAuth';
 
 const queryClient = new QueryClient();
@@ -68,6 +70,14 @@ const router = createBrowserRouter([
       {
         path: 'consent-dashboard',
         element: <ConsentDashboard />,
+      },
+      {
+        path: 'multi-agent',
+        element: <MultiAgentDashboard />,
+      },
+      {
+        path: 'blockchain-did',
+        element: <BlockchainDID />,
       },
     ],
   },
