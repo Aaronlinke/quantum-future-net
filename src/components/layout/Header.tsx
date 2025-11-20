@@ -46,6 +46,12 @@ const Header = () => {
               <Link to="/consent-dashboard" className="text-sm font-medium hover:text-primary transition-colors">
                 Consent
               </Link>
+              <Link to="/multi-agent" className="text-sm font-medium hover:text-primary transition-colors">
+                Multi-Agent
+              </Link>
+              <Link to="/blockchain-did" className="text-sm font-medium hover:text-primary transition-colors">
+                Blockchain DID
+              </Link>
             </>
           )}
           {user ? (
@@ -141,6 +147,20 @@ const Header = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Consent
+                </Link>
+                <Link
+                  to="/multi-agent"
+                  className="text-sm font-medium hover:text-primary transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Multi-Agent
+                </Link>
+                <Link
+                  to="/blockchain-did"
+                  className="text-sm font-medium hover:text-primary transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Blockchain DID
                 </Link>
               </>
             )}
