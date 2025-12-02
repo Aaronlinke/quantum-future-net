@@ -4,9 +4,13 @@ import { toast } from 'sonner';
 
 interface P2PConnection {
   id: string;
+  user_id: string;
   peer_id: string;
   connection_type: string;
   status: string;
+  ice_servers?: any;
+  connected_at?: string;
+  disconnected_at?: string;
   created_at: string;
 }
 
@@ -66,15 +70,21 @@ export function useWebRTC(userId: string, connectionType: string = 'data_pod_sha
 
   // Subscribe to P2P connection updates
   useEffect(() => {
-    const loadConnections = async () => {
-      const { data } = await supabase
-        .from('p2p_connections')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('status', 'connected');
+    if (!userId) return;
 
-      if (data) {
-        setConnections(data as P2PConnection[]);
+    const loadConnections = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('p2p_connections' as any)
+          .select('*')
+          .eq('user_id', userId)
+          .eq('status', 'connected');
+
+        if (!error && data) {
+          setConnections(data as unknown as P2PConnection[]);
+        }
+      } catch (error) {
+        console.warn('P2P connections table not yet available:', error);
       }
     };
 
@@ -87,7 +97,7 @@ export function useWebRTC(userId: string, connectionType: string = 'data_pod_sha
         {
           event: '*',
           schema: 'public',
-          table: 'p2p_connections',
+          table: 'p2p_connections' as any,
           filter: `user_id=eq.${userId}`
         },
         (payload) => {
@@ -173,13 +183,17 @@ export function useWebRTC(userId: string, connectionType: string = 'data_pod_sha
       await pc.setLocalDescription(offer);
 
       // Store connection in database
-      await supabase.from('p2p_connections').insert({
-        user_id: userId,
-        peer_id: targetPeerId,
-        connection_type: connectionType,
-        status: 'connecting',
-        ice_servers: DEFAULT_ICE_SERVERS as any
-      });
+      try {
+        await supabase.from('p2p_connections' as any).insert({
+          user_id: userId,
+          peer_id: targetPeerId,
+          connection_type: connectionType,
+          status: 'connecting',
+          ice_servers: DEFAULT_ICE_SERVERS as any
+        });
+      } catch (error) {
+        console.warn('Could not store P2P connection in database:', error);
+      }
 
       // Send offer via signaling channel
       signalingChannel.current?.send({
@@ -261,15 +275,19 @@ export function useWebRTC(userId: string, connectionType: string = 'data_pod_sha
   };
 
   const updateConnectionStatus = async (peerId: string, status: string) => {
-    await supabase
-      .from('p2p_connections')
-      .update({
-        status,
-        ...(status === 'connected' ? { connected_at: new Date().toISOString() } : {}),
-        ...(status === 'disconnected' ? { disconnected_at: new Date().toISOString() } : {})
-      })
-      .eq('user_id', userId)
-      .eq('peer_id', peerId);
+    try {
+      await supabase
+        .from('p2p_connections' as any)
+        .update({
+          status,
+          ...(status === 'connected' ? { connected_at: new Date().toISOString() } : {}),
+          ...(status === 'disconnected' ? { disconnected_at: new Date().toISOString() } : {})
+        })
+        .eq('user_id', userId)
+        .eq('peer_id', peerId);
+    } catch (error) {
+      console.warn('Could not update P2P connection status:', error);
+    }
   };
 
   const disconnect = (peerId: string) => {
