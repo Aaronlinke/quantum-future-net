@@ -6,3 +6,11 @@ verify_jwt = false
 [functions.execute-agent]
 verify_jwt = false
 
+[functions.agent-communication]
+verify_jwt = false
+
+[functions.knowledge-extraction]
+verify_jwt = false
+
+[functions.ipfs-gateway]
+verify_jwt = false
