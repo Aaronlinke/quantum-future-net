@@ -17,6 +17,9 @@ import AgentHistory from '@/pages/AgentHistory';
 import ConsentDashboard from '@/pages/ConsentDashboard';
 import MultiAgentDashboard from '@/pages/MultiAgentDashboard';
 import BlockchainDID from '@/pages/BlockchainDID';
+import P2PNetwork from '@/pages/P2PNetwork';
+import AnimationsDemo from '@/pages/AnimationsDemo';
+import IPFSStorage from '@/pages/IPFSStorage';
 import { AuthProvider } from '@/hooks/useAuth';
 
 const queryClient = new QueryClient();
