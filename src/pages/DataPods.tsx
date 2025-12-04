@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
+import { useKnowledgeExtraction } from '@/hooks/useKnowledgeExtraction';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Database, Plus, Trash2, Lock, Eye, EyeOff, Shield, Key, CheckCircle2 } from 'lucide-react';
+import { Database, Plus, Trash2, Lock, Eye, EyeOff, Shield, Key, CheckCircle2, Brain, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -38,6 +39,7 @@ const DataPods = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { masterPassword, isUnlocked, unlock } = useMasterPassword();
+  const { extracting, extractFromContent, lastResult } = useKnowledgeExtraction();
   const [pods, setPods] = useState<DataPod[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -46,6 +48,7 @@ const DataPods = () => {
   const [visiblePods, setVisiblePods] = useState<Set<string>>(new Set());
   const [decryptedData, setDecryptedData] = useState<Map<string, string>>(new Map());
   const [zkProofs, setZkProofs] = useState<Map<string, ZKProof>>(new Map());
+  const [extractedPods, setExtractedPods] = useState<Set<string>>(new Set());
   const [newPod, setNewPod] = useState({
     data_type: '',
     encrypted_data: '',
@@ -101,20 +104,35 @@ const DataPods = () => {
         timestamp: Date.now()
       };
       
-      const { error } = await supabase
+      const { data: insertedPod, error } = await supabase
         .from('data_pods')
         .insert([{
           user_id: user.id,
           data_type: newPod.data_type,
           encrypted_data: encrypted,
           metadata: metadata as unknown as Json
-        }]);
+        }])
+        .select()
+        .single();
 
       if (error) {
         toast.error('Fehler beim Erstellen des Data Pods');
       } else {
         toast.success('Data Pod mit Zero-Knowledge-Proof erstellt!');
         setIsDialogOpen(false);
+        
+        // Automatic Knowledge Extraction
+        const contentToExtract = {
+          data_type: newPod.data_type,
+          content: newPod.encrypted_data,
+          timestamp: new Date().toISOString()
+        };
+        
+        const extractionResult = await extractFromContent(contentToExtract, insertedPod?.id);
+        if (extractionResult) {
+          setExtractedPods(prev => new Set(prev).add(insertedPod.id));
+        }
+        
         setNewPod({ data_type: '', encrypted_data: '', metadata: {} });
         fetchPods();
       }
@@ -319,10 +337,23 @@ const DataPods = () => {
                     AES-256-GCM Verschlüsselung + Zero-Knowledge-Proof
                   </p>
                 </div>
-                <Button type="submit" className="w-full">
-                  <Lock className="w-4 h-4 mr-2" />
-                  Pod erstellen
+                <Button type="submit" className="w-full" disabled={extracting}>
+                  {extracting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Extrahiere Wissen...
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-4 h-4 mr-2" />
+                      Pod erstellen & Wissen extrahieren
+                    </>
+                  )}
                 </Button>
+                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-2">
+                  <Brain className="w-3 h-3" />
+                  KI extrahiert automatisch Entitäten für den Knowledge Graph
+                </p>
               </form>
             </DialogContent>
           </Dialog>
@@ -407,9 +438,17 @@ const DataPods = () => {
                     </div>
                   )}
                   <div className="mt-4 pt-4 border-t border-border/50">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Lock className="w-3 h-3" />
-                      <span>End-to-End Encrypted</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Lock className="w-3 h-3" />
+                        <span>End-to-End Encrypted</span>
+                      </div>
+                      {extractedPods.has(pod.id) && (
+                        <div className="flex items-center gap-1 text-xs text-primary">
+                          <Brain className="w-3 h-3" />
+                          <span>Wissen extrahiert</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
