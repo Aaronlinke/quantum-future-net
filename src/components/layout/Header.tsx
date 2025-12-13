@@ -52,6 +52,12 @@ const Header = () => {
               <Link to="/blockchain-did" className="text-sm font-medium hover:text-primary transition-colors">
                 Blockchain DID
               </Link>
+              <Link to="/p2p-network" className="text-sm font-medium hover:text-primary transition-colors">
+                P2P
+              </Link>
+              <Link to="/ipfs-storage" className="text-sm font-medium hover:text-primary transition-colors">
+                IPFS
+              </Link>
             </>
           )}
           {user ? (
@@ -161,6 +167,20 @@ const Header = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Blockchain DID
+                </Link>
+                <Link
+                  to="/p2p-network"
+                  className="text-sm font-medium hover:text-primary transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  P2P Netzwerk
+                </Link>
+                <Link
+                  to="/ipfs-storage"
+                  className="text-sm font-medium hover:text-primary transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  IPFS Storage
                 </Link>
               </>
             )}

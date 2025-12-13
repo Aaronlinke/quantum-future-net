@@ -82,6 +82,18 @@ const router = createBrowserRouter([
         path: 'blockchain-did',
         element: <BlockchainDID />,
       },
+      {
+        path: 'p2p-network',
+        element: <P2PNetwork />,
+      },
+      {
+        path: 'animations',
+        element: <AnimationsDemo />,
+      },
+      {
+        path: 'ipfs-storage',
+        element: <IPFSStorage />,
+      },
     ],
   },
 ]);
