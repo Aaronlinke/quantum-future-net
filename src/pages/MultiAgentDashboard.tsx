@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Network, Brain, Zap, Shield, Activity, TrendingUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import AgentNetworkVisualization from '@/components/knowledge/AgentNetworkVisualization';
 
 interface Agent {
   id: string;
@@ -149,16 +150,11 @@ export default function MultiAgentDashboard() {
   };
 
   const renderNetworkView = () => (
-    <div className="relative h-[600px] rounded-lg border bg-muted/20 flex items-center justify-center">
-      <div className="text-center space-y-4">
-        <Network className="h-16 w-16 mx-auto text-muted-foreground" />
-        <div>
-          <h3 className="text-lg font-semibold">Netzwerk-Visualisierung</h3>
-          <p className="text-sm text-muted-foreground mt-2">
-            Interaktive Netzwerk-Ansicht der Agent-Beziehungen
-          </p>
-        </div>
-      </div>
+    <div className="relative h-[600px] rounded-lg border bg-muted/20">
+      <AgentNetworkVisualization onNodeClick={(node) => {
+        const agent = agents.find(a => a.id === node.id);
+        if (agent) setSelectedAgent(agent);
+      }} />
     </div>
   );
 
